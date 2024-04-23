@@ -1,25 +1,34 @@
 package com.example.plugins
 
-import com.example.data.Product
+import com.example.service.ProductService
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    routing {
-        get("/") {
-            call.respondText("Hello World!")
-        }
-        get("/product") {
-            val products = listOf(Product(1, "Product 1"), Product(2, "Product 2"))
-            call.respond(products)
-        }
-        get("/product/{id}") {
-            call.parameters["id"]?.let {
-                val product = Product(it.toInt(), "Product $it")
-                call.respond(product)
-            } ?: call.respondText("Product not found")
 
+    val productService by inject<ProductService>()
+
+    routing {
+        route("/product") {
+            get {
+                val products = productService.list()
+                call.respond(products)
+            }
+            get("/{id}") {
+                call.parameters["id"]?.let {
+                    val product = productService.get(it.toInt()) ?: throw NotFoundException("Product not found")
+                    call.respond(product)
+                } ?: NotFoundException("Product not found")
+
+            }
+            post {
+                // TODO
+                call.respondText("Product created")
+            }
         }
+
     }
 }
